@@ -25,8 +25,6 @@ chrome.runtime.onMessage.addListener(async (message, sender) => {
       console.error('[CONTENT] #omnisearch-content not found in sidebar for error message.');
     }
   }
-  // No explicit return true/false needed for async listeners when sendResponse is not used.
-  // The promise returned by the async function handles the lifecycle.
 });
 
 // Check on page load

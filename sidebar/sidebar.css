@@ -115,18 +115,3 @@
   padding-bottom: 10px;
   border-bottom: 1px solid #eee;
 }
-
-/* Responsive adjustments for max-width if needed, 
-   but specific width is now user-configurable. 
-   These might be less effective or could be changed to max-width constraints. */
-@media (max-width: 1200px) {
-  #omnisearch-sidebar {
-    /* width: 350px; Example: consider max-width: 90vw; or similar */
-  }
-}
-
-@media (max-width: 900px) {
-  #omnisearch-sidebar {
-    /* width: 300px; */
-  }
-}
