@@ -1,0 +1,132 @@
+#omnisearch-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  /* width will be set by content.js based on user settings */
+  height: 100vh;
+  background: white;
+  border-left: 1px solid #ddd;
+  z-index: 10000;
+  overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+}
+
+#omnisearch-header {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#omnisearch-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+#omnisearch-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+#omnisearch-close:hover {
+  background-color: #e9ecef;
+}
+
+#omnisearch-content {
+  padding: 15px;
+}
+
+#omnisearch-loading {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+}
+
+.omnisearch-result {
+  margin-bottom: 15px;
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.omnisearch-result:hover {
+  background-color: #f8f9fa;
+  border-color: #0066cc;
+}
+
+.omnisearch-title {
+  font-weight: bold;
+  color: #0066cc;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.omnisearch-excerpt {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 5px;
+}
+
+.omnisearch-path {
+  color: #999;
+  font-size: 11px;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+.omnisearch-no-results {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+  font-style: italic;
+}
+
+.omnisearch-error {
+  color: #d73a49;
+  padding: 20px;
+  text-align: center;
+  background-color: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 6px;
+  margin: 10px;
+}
+
+.omnisearch-count {
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 13px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Responsive adjustments for max-width if needed, 
+   but specific width is now user-configurable. 
+   These might be less effective or could be changed to max-width constraints. */
+@media (max-width: 1200px) {
+  #omnisearch-sidebar {
+    /* width: 350px; Example: consider max-width: 90vw; or similar */
+  }
+}
+
+@media (max-width: 900px) {
+  #omnisearch-sidebar {
+    /* width: 300px; */
+  }
+}
