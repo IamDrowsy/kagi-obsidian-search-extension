@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load saved settings or defaults
   try {
-    const data = await browser.storage.local.get(DEFAULT_SETTINGS);
+    const data = await chrome.storage.local.get(DEFAULT_SETTINGS);
     baseUrlInput.value = data.omnisearchBaseUrl;
     portInput.value = data.omnisearchPort;
     vaultInput.value = data.obsidianVaultName;
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     try {
-      await browser.storage.local.set(newSettings);
+      await chrome.storage.local.set(newSettings);
       statusMessage.textContent = 'Settings saved successfully!';
       statusMessage.style.color = 'green';
       setTimeout(() => {

@@ -5,14 +5,14 @@ const DEFAULT_SETTINGS = {
   omnisearchPort: 51361,
 };
 
-browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender) => {
   console.log('📨 Message received:', message);
 
   if (message.type === 'KAGI_SEARCH') {
     console.log('🔍 Processing search:', message.query);
 
     try {
-      const settings = await browser.storage.local.get(DEFAULT_SETTINGS);
+      const settings = await chrome.storage.local.get(DEFAULT_SETTINGS);
       
       // Fetch from Omnisearch
       const omnisearchUrl = `${settings.omnisearchBaseUrl}:${settings.omnisearchPort}/search?q=${encodeURIComponent(message.query)}`;
@@ -24,7 +24,7 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       console.log('📊 Omnisearch results:', results);
 
       // Send results back to content script
-      browser.tabs.sendMessage(sender.tab.id, {
+      chrome.tabs.sendMessage(sender.tab.id, {
         type: 'OMNISEARCH_RESULTS',
         results: results || [], // Ensure results is always an array
         query: message.query
@@ -34,12 +34,10 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       console.error('❌ Error fetching Omnisearch results:', error);
 
       // Send error back to content script
-      browser.tabs.sendMessage(sender.tab.id, {
+      chrome.tabs.sendMessage(sender.tab.id, {
         type: 'OMNISEARCH_ERROR',
         error: error.message
       });
     }
   }
-
-  return true;
 });

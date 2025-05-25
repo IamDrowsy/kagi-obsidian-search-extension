@@ -4,7 +4,7 @@ const DEFAULT_CONTENT_SETTINGS = {
 };
 
 // Listen for messages from background script
-browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender) => {
   console.log('[CONTENT] Received message:', message);
   let sidebar;
 
@@ -24,13 +24,9 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     } else {
       console.error('[CONTENT] #omnisearch-content not found in sidebar for error message.');
     }
-  } else {
-    // Message not handled by this listener
-    return false; // Or undefined, as sendResponse is not used.
   }
-  // Indicate that the message was handled (or will be handled asynchronously)
-  // This is important if sendResponse were to be used asynchronously.
-  return true;
+  // No explicit return true/false needed for async listeners when sendResponse is not used.
+  // The promise returned by the async function handles the lifecycle.
 });
 
 // Check on page load
@@ -62,7 +58,7 @@ function extractKagiQuery() {
     console.log('Kagi search detected:', query);
 
     // Send to background script
-    browser.runtime.sendMessage({
+    chrome.runtime.sendMessage({
       type: 'KAGI_SEARCH',
       query: query.trim(),
       url: window.location.href
@@ -83,13 +79,13 @@ function loadCSS() {
   const link = document.createElement('link');
   link.id = 'omnisearch-styles';
   link.rel = 'stylesheet';
-  link.href = browser.runtime.getURL('sidebar/sidebar.css');
+  link.href = chrome.runtime.getURL('sidebar/sidebar.css');
   document.head.appendChild(link);
 }
 
 // Create sidebar for Omnisearch results
 async function createOmnisearchSidebar() {
-  const settings = await browser.storage.local.get(DEFAULT_CONTENT_SETTINGS);
+  const settings = await chrome.storage.local.get(DEFAULT_CONTENT_SETTINGS);
   let sidebar = document.getElementById('omnisearch-sidebar');
   
   if (sidebar) {
@@ -103,7 +99,7 @@ async function createOmnisearchSidebar() {
   // Default width from settings will be applied after creation
 
   try {
-    const sidebarURL = browser.runtime.getURL('sidebar/sidebar.html');
+    const sidebarURL = chrome.runtime.getURL('sidebar/sidebar.html');
     const response = await fetch(sidebarURL);
     if (!response.ok) {
       throw new Error(`Failed to load sidebar.html: ${response.status} ${response.statusText}`);
@@ -180,7 +176,7 @@ async function displayOmnisearchResults(results, query) {
       const path = result.dataset.path;
       if (path) {
         try {
-          const settings = await browser.storage.local.get(DEFAULT_CONTENT_SETTINGS);
+          const settings = await chrome.storage.local.get(DEFAULT_CONTENT_SETTINGS);
           const obsidianUrl = `obsidian://open?vault=${encodeURIComponent(settings.obsidianVaultName)}&file=${encodeURIComponent(path)}`;
           
           // Use an iframe to trigger the protocol without opening a new persistent tab
