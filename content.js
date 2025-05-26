@@ -16,11 +16,12 @@ chrome.runtime.onMessage.addListener(async (message, sender) => {
     if (content) {
       content.innerHTML = `
         <div class="omnisearch-error">
-          Error: ${message.error}
+          Error:  <span class="error-message"></span>
           <br><br>
           <small>Make sure Omnisearch is running (default: localhost:51361) and the Kagi-Obsidian Bridge extension settings are correct.</small>
         </div>
       `;
+      content.querySelector('.error-message').textContent = message.error;
     } else {
       console.error('[CONTENT] #omnisearch-content not found in sidebar for error message.');
     }
@@ -103,15 +104,9 @@ async function createOmnisearchSidebar() {
       throw new Error(`Failed to load sidebar.html: ${response.status} ${response.statusText}`);
     }
     const html = await response.text();
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html.trim(); // html.trim() is important if there's leading/trailing whitespace
-
-    if (!tempDiv.firstChild || tempDiv.firstChild.id !== 'omnisearch-sidebar') {
-        console.error(tempDiv.firstChild);
-      console.error("Fetched HTML:", html); // Log the fetched HTML for debugging
-      throw new Error("Fetched HTML does not contain #omnisearch-sidebar as its root element.");
-    }
-    sidebar = tempDiv.firstChild;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html.trim(), 'text/html');
+    sidebar = doc.body.firstChild;
     sidebar.style.width = `${settings.sidebarWidth}px`; // Apply configured width
     document.body.appendChild(sidebar);
 
@@ -147,54 +142,88 @@ async function displayOmnisearchResults(results, query) {
   if (!results || results.length === 0) {
     content.innerHTML = `
       <div style="text-align: center; color: #666; padding: 20px;">
-        No notes found for "${query}"
+        No notes found for <span class="queryText"></span>"
       </div>
     `;
+    content.querySelector('.queryText').textContent = query;
     return;
   }
 
-  const resultsHtml = results.map(result => `
-    <div class="omnisearch-result" data-path="${result.path || ''}" title="Path: ${result.path || 'N/A'}">
-      <div class="omnisearch-title">${result.basename || 'Untitled'}</div>
-      ${result.path ? `<div class="omnisearch-path">${result.path}</div>` : ''}
-      <div class="omnisearch-excerpt">${result.excerpt || result.content || ''}</div>
-    </div>
-  `).join('');
+  // Main rendering code
+  content.innerHTML = '';
 
-  content.innerHTML = `
-    <div class="omnisearch-count">
-      Found ${results.length} note${results.length !== 1 ? 's' : ''} for "${query}"
-    </div>
-    ${resultsHtml}
-  `;
+  // Create count element
+  const countDiv = document.createElement('div');
+  countDiv.className = 'omnisearch-count';
+  countDiv.textContent = `Found ${results.length} note${results.length !== 1 ? 's' : ''} for "`;
+  const querySpan = document.createElement('span');
+  querySpan.className = 'result-count-query';
+  querySpan.textContent = query;
+  countDiv.appendChild(querySpan);
+  countDiv.appendChild(document.createTextNode('"'));
+  content.appendChild(countDiv);
 
-  // Add click handlers to open notes in Obsidian
-  content.querySelectorAll('.omnisearch-result').forEach(result => {
-    result.addEventListener('click', async () => {
-      const path = result.dataset.path;
-      if (path) {
-        try {
-          const settings = await chrome.storage.local.get(DEFAULT_CONTENT_SETTINGS);
-          const obsidianUrl = `obsidian://open?vault=${encodeURIComponent(settings.obsidianVaultName)}&file=${encodeURIComponent(path)}`;
-          
-          // Use an iframe to trigger the protocol without opening a new persistent tab
-          const iframe = document.createElement('iframe');
-          iframe.style.display = 'none';
-          iframe.src = obsidianUrl;
-          document.body.appendChild(iframe);
-          
-          // Clean up the iframe after a short delay
-          setTimeout(() => {
-            if (iframe.parentNode) {
-              iframe.parentNode.removeChild(iframe);
-            }
-          }, 500); // Delay to allow protocol handler to activate
-        } catch (e) {
-          console.error("Error opening Obsidian link:", e);
-          // Optionally, inform the user that settings could not be loaded
-          alert("Could not load Obsidian vault settings. Please check extension settings.");
-        }
-      }
-    });
+  // Create and append result elements
+  results.forEach(result => {
+    const resultElement = buildSearchResultElement(result);
+    content.appendChild(resultElement);
   });
+}
+
+function buildSearchResultElement(result) {
+  const resultDiv = document.createElement('div');
+  resultDiv.className = 'omnisearch-result';
+  resultDiv.setAttribute('data-path', result.path || '');
+  resultDiv.title = `Path: ${result.path || 'N/A'}`;
+
+  // Create title element
+  const titleDiv = document.createElement('div');
+  titleDiv.className = 'omnisearch-title';
+  titleDiv.textContent = result.basename || 'Untitled';
+  resultDiv.appendChild(titleDiv);
+
+  // Create path element (if path exists)
+  if (result.path) {
+    const pathDiv = document.createElement('div');
+    pathDiv.className = 'omnisearch-path';
+    pathDiv.textContent = result.path;
+    resultDiv.appendChild(pathDiv);
+  }
+
+  // Create excerpt element
+  const excerptDiv = document.createElement('div');
+  excerptDiv.className = 'omnisearch-excerpt';
+  excerptDiv.textContent = result.excerpt || result.content || '';
+  resultDiv.appendChild(excerptDiv);
+
+  // add on click event to open in obsidian
+  resultDiv.addEventListener('click', () => openInObsidian(result.path));
+
+  return resultDiv;
+}
+
+async function openInObsidian(path) {
+    if (path) {
+      try {
+        const settings = await chrome.storage.local.get(DEFAULT_CONTENT_SETTINGS);
+        const obsidianUrl = `obsidian://open?vault=${encodeURIComponent(settings.obsidianVaultName)}&file=${encodeURIComponent(path)}`;
+        
+        // Use an iframe to trigger the protocol without opening a new persistent tab
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = obsidianUrl;
+        document.body.appendChild(iframe);
+        
+        // Clean up the iframe after a short delay
+        setTimeout(() => {
+          if (iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+          }
+        }, 500); // Delay to allow protocol handler to activate
+      } catch (e) {
+        console.error("Error opening Obsidian link:", e);
+        // Optionally, inform the user that settings could not be loaded
+        alert("Could not load Obsidian vault settings. Please check extension settings.");
+    }
+  }
 }
